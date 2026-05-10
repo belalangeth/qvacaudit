@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>QvacAudit — Presentation</title>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --bg:#080808;
+  --green:#00ff88;
+  --green2:#00cc66;
+  --text:#e8e8e0;
+  --muted:#666660;
+  --border:#1e1e1e;
+  --slide-w:900px;
+}
+
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:'DM Mono', monospace;
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  padding:40px 20px;
+  gap:2px;
+}
+
+/* progress bar */
+.progress{
+  position:fixed;
+  top:0;left:0;
+  height:2px;
+  background:var(--green);
+  box-shadow:0 0 8px var(--green);
+  transition:width 0.3s;
+  z-index:100;
+}
+
+/* nav */
+.nav{
+  position:fixed;
+  bottom:32px;
+  left:50%;
+  transform:translateX(-50%);
+  display:flex;
+  align-items:center;
+  gap:16px;
+  background:rgba(14,14,14,0.95);
+  border:1px solid var(--border);
+  padding:10px 20px;
+  border-radius:40px;
+  backdrop-filter:blur(10px);
+  z-index:100;
+}
+
+.nav button{
+  background:none;
+  border:none;
+  color:var(--muted);
+  font-family:'DM Mono',monospace;
+  font-size:12px;
+  cursor:pointer;
+  padding:4px 10px;
+  border-radius:4px;
+  transition:all 0.15s;
+}
+.nav button:hover{color:var(--text);}
+.nav button.active{color:var(--green);}
+
+.nav-counter{
+  font-size:11px;
+  color:var(--muted);
+  min-width:40px;
+  text-align:center;
+}
+
+/* slide */
+.slide{
+  width:var(--slide-w);
+  max-width:100%;
+  min-height:560px;
+  border:1px solid var(--border);
+  padding:64px;
+  display:none;
+  flex-direction:column;
+  justify-content:center;
+  position:relative;
+  overflow:hidden;
+  animation:fadeIn 0.3s ease;
+}
+
+.slide.active{display:flex;}
+
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* slide number */
+.slide::before{
+  content:attr(data-num);
+  position:absolute;
+  top:24px;right:28px;
+  font-size:11px;
+  color:var(--muted);
+  letter-spacing:2px;
+}
+
+/* slide: cover */
+.slide-cover{
+  background:radial-gradient(ellipse at 20% 50%, rgba(0,255,136,0.04) 0%, transparent 60%);
+}
+
+.cover-label{
+  font-size:11px;
+  letter-spacing:3px;
+  text-transform:uppercase;
+  color:var(--green);
+  margin-bottom:32px;
+}
+
+.cover-title{
+  font-family:'Instrument Serif', serif;
+  font-size:clamp(48px,7vw,80px);
+  font-weight:400;
+  line-height:1.05;
+  letter-spacing:-2px;
+  margin-bottom:32px;
+}
+
+.cover-title em{
+  font-style:italic;
+  color:var(--green);
+}
+
+.cover-sub{
+  font-size:13px;
+  color:var(--muted);
+  max-width:420px;
+  line-height:1.8;
+}
+
+.cover-url{
+  margin-top:40px;
+  font-size:12px;
+  color:var(--green);
+  text-decoration:none;
+  border-bottom:1px solid rgba(0,255,136,0.3);
+  padding-bottom:2px;
+  width:fit-content;
+}
+
+/* slide: section */
+.slide-section{
+  background:radial-gradient(ellipse at 80% 20%, rgba(0,255,136,0.03) 0%, transparent 50%);
+}
+
+.section-num{
+  font-size:72px;
+  font-family:'Instrument Serif',serif;
+  font-style:italic;
+  color:rgba(0,255,136,0.12);
+  line-height:1;
+  margin-bottom:16px;
+}
+
+.section-title{
+  font-family:'Instrument Serif',serif;
+  font-size:clamp(32px,5vw,52px);
+  font-weight:400;
+  line-height:1.1;
+  letter-spacing:-1px;
+  margin-bottom:20px;
+}
+
+.section-title em{
+  font-style:italic;
+  color:var(--green);
+}
+
+.section-body{
+  font-size:13px;
+  color:var(--muted);
+  line-height:1.9;
+  max-width:540px;
+}
+
+/* slide: list */
+.list-label{
+  font-size:11px;
+  letter-spacing:2px;
+  text-transform:uppercase;
+  color:var(--muted);
+  margin-bottom:32px;
+}
+
+.list-title{
+  font-family:'Instrument Serif',serif;
+  font-size:clamp(24px,4vw,36px);
+  font-weight:400;
+  letter-spacing:-0.5px;
+  margin-bottom:36px;
+}
+
+.items{
+  display:flex;
+  flex-direction:column;
+  gap:16px;
+}
+
+.item{
+  display:flex;
+  gap:16px;
+  align-items:flex-start;
+}
+
+.item-num{
+  font-size:11px;
+  color:var(--green);
+  min-width:24px;
+  padding-top:2px;
+}
+
+.item-content{}
+.item-title{font-size:14px;font-weight:500;margin-bottom:4px;}
+.item-desc{font-size:12px;color:var(--muted);line-height:1.6;}
+
+/* code block */
+.code-block{
+  background:#0c0c0c;
+  border:1px solid var(--border);
+  border-left:2px solid var(--green);
+  padding:20px 24px;
+  font-size:12px;
+  line-height:1.8;
+  color:#aaa;
+  border-radius:0 4px 4px 0;
+  margin-top:24px;
+}
+
+.code-block .kw{color:var(--green);}
+.code-block .cm{color:var(--muted);}
+.code-block .fn{color:#88aaff;}
+
+/* two col */
+.two-col{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:32px;
+  margin-top:8px;
+}
+
+.col-label{
+  font-size:10px;
+  letter-spacing:2px;
+  text-transform:uppercase;
+  color:var(--muted);
+  margin-bottom:16px;
+  padding-bottom:8px;
+  border-bottom:1px solid var(--border);
+}
+
+.col-items{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.col-item{
+  font-size:12px;
+  color:var(--muted);
+  padding-left:12px;
+  border-left:1px solid var(--border);
+  line-height:1.6;
+}
+
+.col-item strong{color:var(--text);display:block;}
+
+/* stat grid */
+.stats{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:2px;
+  margin-top:40px;
+}
+
+.stat{
+  padding:24px;
+  border:1px solid var(--border);
+  background:#0c0c0c;
+}
+
+.stat-val{
+  font-family:'Instrument Serif',serif;
+  font-size:36px;
+  font-style:italic;
+  color:var(--green);
+  line-height:1;
+  margin-bottom:8px;
+}
+
+.stat-label{font-size:11px;color:var(--muted);}
+
+/* final */
+.final-title{
+  font-family:'Instrument Serif',serif;
+  font-size:clamp(36px,6vw,64px);
+  font-weight:400;
+  line-height:1.05;
+  letter-spacing:-1.5px;
+  margin-bottom:24px;
+}
+
+.final-title em{font-style:italic;color:var(--green);}
+
+.links{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  margin-top:32px;
+}
+
+.link-row{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  font-size:12px;
+}
+
+.link-label{color:var(--muted);min-width:80px;}
+.link-val{color:var(--green);}
+
+/* corner accent */
+.corner{
+  position:absolute;
+  bottom:0;right:0;
+  width:120px;height:120px;
+  border-top:1px solid var(--border);
+  border-left:1px solid var(--border);
+  opacity:0.4;
+}
+</style>
+</head>
+<body>
+
+<div class="progress" id="progress"></div>
+
+<!-- SLIDE 1: Cover -->
+<div class="slide slide-cover active" data-num="01 / 07">
+  <div class="cover-label">// colosseum frontier hackathon · tether qvac track</div>
+  <div class="cover-title">Qvac<em>Audit</em></div>
+  <div class="cover-sub">A Solana smart contract auditor that runs the AI locally. Your code never leaves your machine.</div>
+  <a class="cover-url" href="https://qvacaudit.xyz" target="_blank">qvacaudit.xyz</a>
+  <div class="corner"></div>
+</div>
+
+<!-- SLIDE 2: Problem -->
+<div class="slide slide-section" data-num="02 / 07">
+  <div class="section-num">01</div>
+  <div class="section-title">The <em>problem</em></div>
+  <div class="section-body">
+    Every AI tool that audits smart contracts sends your code to a remote server.<br><br>
+    That's fine for public repos. But pre-launch programs have real value — leaked logic means someone can front-run your deploy or find exploits before you do.<br><br>
+    Existing options: pay an audit firm, use a cloud AI and hope they don't log it, or ship and pray.
+  </div>
+</div>
+
+<!-- SLIDE 3: Solution -->
+<div class="slide" data-num="03 / 07">
+  <div class="list-label">// solution</div>
+  <div class="list-title">Local AI audit.<br>Zero data leaves the machine.</div>
+  <div class="items">
+    <div class="item">
+      <div class="item-num">01</div>
+      <div class="item-content">
+        <div class="item-title">Paste your Rust program</div>
+        <div class="item-desc">Any Anchor or native Solana program. The editor takes raw .rs source code.</div>
+      </div>
+    </div>
+    <div class="item">
+      <div class="item-num">02</div>
+      <div class="item-content">
+        <div class="item-title">QVAC runs the model locally</div>
+        <div class="item-desc">LLM loads into server memory via @qvac/sdk. Inference happens on-device, CPU only, no GPU required.</div>
+      </div>
+    </div>
+    <div class="item">
+      <div class="item-num">03</div>
+      <div class="item-content">
+        <div class="item-title">Findings stream back in real time</div>
+        <div class="item-desc">Results arrive token-by-token over SSE. Severity levels, locations, and concrete fixes.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 4: QVAC Integration -->
+<div class="slide" data-num="04 / 07">
+  <div class="list-label">// qvac integration</div>
+  <div class="list-title">QVAC is the core,<br>not a wrapper.</div>
+  <div class="code-block">
+<span class="cm">// load model into memory once</span>
+<span class="kw">const</span> modelId = <span class="kw">await</span> <span class="fn">loadModel</span>({
+  modelSrc: LLAMA_3_2_1B_INST_Q4_0,
+  modelType: <span class="kw">"llm"</span>,
+  modelConfig: { ctx_size: 2048, device: <span class="kw">"cpu"</span> }
+});
+
+<span class="cm">// stream audit tokens to browser via SSE</span>
+<span class="kw">const</span> result = <span class="fn">completion</span>({ modelId, history, stream: <span class="kw">true</span> });
+<span class="kw">for await</span> (<span class="kw">const</span> token <span class="kw">of</span> result.tokenStream) {
+  res.<span class="fn">write</span>(`data: ${token}\n\n`);
+}
+  </div>
+</div>
+
+<!-- SLIDE 5: What it catches -->
+<div class="slide" data-num="05 / 07">
+  <div class="list-label">// vulnerability coverage</div>
+  <div class="list-title">What it checks</div>
+  <div class="two-col">
+    <div>
+      <div class="col-label">account security</div>
+      <div class="col-items">
+        <div class="col-item"><strong>Missing signer check</strong>is_signer never validated</div>
+        <div class="col-item"><strong>Missing owner check</strong>account owner not verified</div>
+        <div class="col-item"><strong>Account confusion</strong>type cosplay attacks</div>
+        <div class="col-item"><strong>PDA bump</strong>not stored or validated</div>
+      </div>
+    </div>
+    <div>
+      <div class="col-label">program logic</div>
+      <div class="col-items">
+        <div class="col-item"><strong>Integer overflow</strong>unchecked u64 arithmetic</div>
+        <div class="col-item"><strong>Arbitrary CPI</strong>unverified program_id</div>
+        <div class="col-item"><strong>Reentrancy patterns</strong>state written after CPI</div>
+        <div class="col-item"><strong>Incorrect account close</strong>lamports not drained</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 6: Stats -->
+<div class="slide slide-section" data-num="06 / 07">
+  <div class="section-num">02</div>
+  <div class="section-title">Built and<br><em>shipped.</em></div>
+  <div class="section-body">Live on mainnet infrastructure. Open source. No login required.</div>
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-val">0</div>
+      <div class="stat-label">external API calls</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val">8+</div>
+      <div class="stat-label">vulnerability classes</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val">CPU</div>
+      <div class="stat-label">no GPU required</div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 7: Final -->
+<div class="slide" data-num="07 / 07">
+  <div class="final-title">Try it <em>live.</em></div>
+  <div class="section-body">Paste any Solana program. See what it finds.</div>
+  <div class="links">
+    <div class="link-row">
+      <span class="link-label">website</span>
+      <span class="link-val">https://qvacaudit.xyz</span>
+    </div>
+    <div class="link-row">
+      <span class="link-label">github</span>
+      <span class="link-val">https://github.com/belalangeth/qvacaudit</span>
+    </div>
+    <div class="link-row">
+      <span class="link-label">powered by</span>
+      <span class="link-val">QVAC by Tether (@qvac/sdk)</span>
+    </div>
+  </div>
+  <div class="corner"></div>
+</div>
+
+<!-- Nav -->
+<div class="nav">
+  <button onclick="prev()">← prev</button>
+  <span class="nav-counter" id="counter">1 / 7</span>
+  <button onclick="next()">next →</button>
+</div>
+
+<script>
+const slides = document.querySelectorAll('.slide');
+const counter = document.getElementById('counter');
+const progress = document.getElementById('progress');
+let current = 0;
+
+function show(n){
+  slides[current].classList.remove('active');
+  current = (n + slides.length) % slides.length;
+  slides[current].classList.add('active');
+  counter.textContent = `${current+1} / ${slides.length}`;
+  progress.style.width = `${((current+1)/slides.length)*100}%`;
+}
+
+function next(){ show(current+1); }
+function prev(){ show(current-1); }
+
+document.addEventListener('keydown', e => {
+  if(e.key === 'ArrowRight' || e.key === 'ArrowDown') next();
+  if(e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   prev();
+});
+
+progress.style.width = `${(1/slides.length)*100}%`;
+</script>
+</body>
+</html>
