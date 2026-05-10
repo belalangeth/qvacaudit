@@ -1,35 +1,50 @@
-# 🔍 QvacAudit — Local Solana Smart Contract Security Auditor
+# QvacAudit
 
-> **Your code never leaves your machine.**  
-> Powered by [QVAC](https://qvac.tether.io) — Tether's local-first AI SDK.
+Paste your Solana program, get a security audit back. Runs entirely on your machine — no API keys, no sending code to external servers.
 
----
-
-## What is QvacAudit?
-
-QvacAudit is a **production-ready web application** that audits Solana smart contracts for security vulnerabilities using a locally-running LLM. No API keys. No cloud. No data leaks. Your Rust source code is analyzed entirely on your device.
-
-This is critical for developers working on **sensitive or pre-launch programs** who cannot afford to send their code to external AI services.
+Built on [QVAC](https://qvac.tether.io) by Tether.
 
 ---
 
-## Vulnerabilities Detected
+## Why I built this
 
-| Category | Examples |
-|---|---|
-| Missing checks | Signer not validated, owner not checked |
-| Arithmetic | Integer overflow, underflow, lamport overflow |
-| Account confusion | Type cosplay, wrong discriminator |
-| PDA | Bump not stored or validated |
-| CPI | Arbitrary cross-program invocation |
-| State management | Reentrancy-like patterns, incorrect account close |
-| Token security | Mint/freeze authority bypass |
+Every AI security tool I found sends your code to some cloud endpoint. That's fine for public repos, but if you're working on something pre-launch, you probably don't want your program logic sitting in someone else's logs.
+
+QVAC lets you run an LLM locally. So I wrapped it in a web UI and pointed it at Solana smart contract security.
 
 ---
 
-## QVAC Integration
+## What it checks
 
-QvacAudit uses QVAC SDK's **LLM inference** capability (`@qvac/sdk`) to run a fine-tuned security analysis model locally:
+- Missing signer / owner validation
+- Integer overflow and underflow (unchecked arithmetic on `u64`)
+- PDA bump not stored or verified
+- Arbitrary CPI — calling a user-supplied program without verifying the program ID
+- Account confusion / type cosplay attacks
+- Reentrancy-like patterns after CPI calls
+- Incorrect account closing (lamports not drained, data not zeroed)
+- Token mint/freeze authority bypass
+
+---
+
+## Setup
+
+Requires Node.js >= 22 and about 2GB free RAM.
+
+```bash
+git clone https://github.com/belalangeth/qvacaudit
+cd qvacaudit
+npm install
+npm start
+```
+
+Open `http://localhost:3000`, click **Load AI Model** (downloads ~400MB on first run, cached after), paste your Rust code, hit **Run Audit**.
+
+---
+
+## How it works
+
+QVAC SDK loads an LLM into local memory and runs inference over your code:
 
 ```js
 import { loadModel, completion, LLAMA_3_2_1B_INST_Q4_0 } from "@qvac/sdk";
@@ -37,116 +52,40 @@ import { loadModel, completion, LLAMA_3_2_1B_INST_Q4_0 } from "@qvac/sdk";
 const modelId = await loadModel({
   modelSrc: LLAMA_3_2_1B_INST_Q4_0,
   modelType: "llm",
-  modelConfig: { ctx_size: 4096 },
+  modelConfig: { ctx_size: 2048, device: "cpu" },
 });
 
 const result = completion({ modelId, history, stream: true });
 
 for await (const token of result.tokenStream) {
-  // stream tokens to browser via SSE
+  // streamed to browser via SSE
 }
 ```
 
-The integration is **core to the product** — without QVAC, there is no audit. The LLM never receives data from any external network connection.
+The audit response streams token-by-token to the browser. Your code never touches the network.
 
 ---
 
-## Getting Started
-
-### Requirements
-
-- Node.js >= 22.17
-- npm >= 10.9
-- ~2 GB RAM (for model loading)
-
-### Install & Run
-
-```bash
-git clone https://github.com/<your-username>/qvacaudit
-cd qvacaudit
-npm install
-npm start
-```
-
-Open **http://localhost:3000**
-
-### First Use
-
-1. Click **"⚡ Load AI Model"** — downloads the QVAC LLM on first run (~400 MB, cached after)
-2. Paste your Solana program Rust code into the editor
-3. Click **"🛡 Run Audit"**
-4. Read the streaming security report in real time
-
----
-
-## Project Structure
+## Project layout
 
 ```
-qvacaudit/
-├── src/
-│   ├── server.js       Express server + SSE endpoints
-│   └── auditor.js      QVAC model lifecycle + audit logic
-├── public/
-│   └── index.html      Single-file frontend (editor + output)
-├── package.json
-└── README.md
+src/
+  server.js    Express + SSE endpoints
+  auditor.js   QVAC model loading and inference
+public/
+  index.html   Frontend (editor, streaming output, sample contracts)
 ```
 
 ---
 
-## API
+## Stack
 
-| Endpoint | Method | Description |
-|---|---|---|
-| `GET /api/status` | GET | Model load state |
-| `POST /api/load-model` | POST | Stream model download progress (SSE) |
-| `POST /api/audit` | POST | Stream audit tokens (SSE) |
-
-### Example: run an audit via curl
-
-```bash
-curl -X POST http://localhost:3000/api/audit \
-  -H "Content-Type: application/json" \
-  -d '{"code": "pub fn withdraw(...) { vault.balance = vault.balance - amount; }"}' \
-  --no-buffer
-```
+- QVAC SDK (`@qvac/sdk`) — local LLM inference
+- Express — HTTP server
+- Vanilla JS frontend, no build step
 
 ---
 
-## Sample Contracts
+## Built for
 
-Four vulnerable contracts are built into the UI for testing:
-
-- **Integer Overflow** — unchecked arithmetic on `u64`
-- **Missing Signer Check** — `is_signer` never validated
-- **Authority Bypass** — config account owner not verified
-- **Arbitrary CPI** — user-supplied program invoked without validation
-
----
-
-## Why Local AI?
-
-| Cloud AI | QvacAudit (QVAC) |
-|---|---|
-| Code sent to remote servers | Code stays on device |
-| Requires API key + subscription | Free, no account needed |
-| Fails offline | Works with no internet |
-| Vendor can log your code | Zero data retention |
-
----
-
-## Built With
-
-- [QVAC SDK](https://qvac.tether.io) by Tether — local LLM inference
-- [Express.js](https://expressjs.com) — HTTP server
-- Vanilla HTML/CSS/JS — zero-dependency frontend
-
----
-
-## License
-
-MIT
-
----
-
-*Built for the Colosseum Frontier Hackathon — Tether QVAC Track, 2025*
+Colosseum Frontier Hackathon — Tether QVAC Track 2025
