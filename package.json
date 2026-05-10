@@ -1,5 +1,5 @@
 {
-  "name": "solaudit",
+  "name": "qvacaudit",
   "version": "1.0.0",
   "description": "Local Solana Smart Contract Security Auditor powered by QVAC — no cloud, no data leaks",
   "type": "module",

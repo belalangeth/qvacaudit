@@ -118,7 +118,7 @@ process.on("SIGINT", async () => {
 
 // ─── Start ────────────────────────────────────
 app.listen(PORT, () => {
-  console.log(`\n🔍 SolAudit is running`);
+  console.log(`\n🔍 QvacAudit is running`);
   console.log(`   Local  → http://localhost:${PORT}`);
   console.log(`   AI     → QVAC (local inference, no cloud)`);
   console.log(`   Press Ctrl+C to stop\n`);

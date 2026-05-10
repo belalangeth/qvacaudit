@@ -1,13 +1,13 @@
-# 🔍 SolAudit — Local Solana Smart Contract Security Auditor
+# 🔍 QvacAudit — Local Solana Smart Contract Security Auditor
 
 > **Your code never leaves your machine.**  
 > Powered by [QVAC](https://qvac.tether.io) — Tether's local-first AI SDK.
 
 ---
 
-## What is SolAudit?
+## What is QvacAudit?
 
-SolAudit is a **production-ready web application** that audits Solana smart contracts for security vulnerabilities using a locally-running LLM. No API keys. No cloud. No data leaks. Your Rust source code is analyzed entirely on your device.
+QvacAudit is a **production-ready web application** that audits Solana smart contracts for security vulnerabilities using a locally-running LLM. No API keys. No cloud. No data leaks. Your Rust source code is analyzed entirely on your device.
 
 This is critical for developers working on **sensitive or pre-launch programs** who cannot afford to send their code to external AI services.
 
@@ -29,7 +29,7 @@ This is critical for developers working on **sensitive or pre-launch programs** 
 
 ## QVAC Integration
 
-SolAudit uses QVAC SDK's **LLM inference** capability (`@qvac/sdk`) to run a fine-tuned security analysis model locally:
+QvacAudit uses QVAC SDK's **LLM inference** capability (`@qvac/sdk`) to run a fine-tuned security analysis model locally:
 
 ```js
 import { loadModel, completion, LLAMA_3_2_1B_INST_Q4_0 } from "@qvac/sdk";
@@ -62,8 +62,8 @@ The integration is **core to the product** — without QVAC, there is no audit. 
 ### Install & Run
 
 ```bash
-git clone https://github.com/<your-username>/solaudit
-cd solaudit
+git clone https://github.com/<your-username>/qvacaudit
+cd qvacaudit
 npm install
 npm start
 ```
@@ -82,7 +82,7 @@ Open **http://localhost:3000**
 ## Project Structure
 
 ```
-solaudit/
+qvacaudit/
 ├── src/
 │   ├── server.js       Express server + SSE endpoints
 │   └── auditor.js      QVAC model lifecycle + audit logic
@@ -126,7 +126,7 @@ Four vulnerable contracts are built into the UI for testing:
 
 ## Why Local AI?
 
-| Cloud AI | SolAudit (QVAC) |
+| Cloud AI | QvacAudit (QVAC) |
 |---|---|
 | Code sent to remote servers | Code stays on device |
 | Requires API key + subscription | Free, no account needed |
