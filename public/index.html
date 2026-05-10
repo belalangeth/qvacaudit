@@ -4,6 +4,12 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>qvacaudit — solana contract auditor</title>
+<meta name="description" content="Audit Solana smart contracts for security vulnerabilities. Local AI inference powered by QVAC — your code never leaves your machine."/>
+<meta property="og:title" content="qvacaudit — solana contract auditor"/>
+<meta property="og:description" content="Paste your Rust program, get a security audit back. Local AI, no cloud."/>
+<meta property="og:url" content="https://qvacaudit.xyz"/>
+<meta name="twitter:card" content="summary"/>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔍</text></svg>"/>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap');
 </style>
@@ -477,7 +483,7 @@ footer a:hover{color:var(--text);}
 <!-- Footer -->
 <footer>
   <span>qvacaudit · <a href="https://qvac.tether.io" target="_blank">qvac by tether</a> · local ai, no cloud</span>
-  <span>colosseum frontier hackathon 2025</span>
+  <span><a href="https://github.com/belalangeth/qvacaudit" target="_blank">github</a> · colosseum frontier hackathon 2025</span>
 </footer>
 
 <script>
@@ -560,7 +566,13 @@ async function runAudit(){
           if(e.type==="start"){out.innerHTML="";}
           else if(e.type==="token"){full+=e.token;renderOut(out,full,true);out.scrollTop=out.scrollHeight;}
           else if(e.type==="done"){renderOut(out,full,false);os.textContent="done";reportText=full;cb.disabled=false;document.getElementById("token-count").textContent=full.length+" chars";}
-          else if(e.type==="error"){out.innerHTML=`<span style="color:var(--red)">// error: ${esc(e.message)}</span>`;os.textContent="error";}
+          else if(e.type==="error"){
+  const msg = e.message.includes("not loaded") 
+    ? "// model not loaded yet — click '$ load model' first" 
+    : "// error: "+esc(e.message);
+  out.innerHTML=`<span style="color:var(--red)">${msg}</span>`;
+  os.textContent="error";
+}
         }catch(_){}
       }
     }
