@@ -4,17 +4,18 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>qvacaudit — solana contract auditor</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Berkeley+Mono:ital,wght@0,400;0,700;1,400&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap');
+</style>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 
 :root{
-  --bg:#0c0c0c;
-  --surface:#111111;
-  --surface2:#161616;
-  --border:#222222;
-  --border2:#2a2a2a;
+  --bg:#080808;
+  --surface:#0f0f0f;
+  --surface2:#141414;
+  --border:#2e2e2e;
+  --border2:#3a3a3a;
   --green:#00ff88;
   --green-dim:#00ff8844;
   --red:#ff3366;
@@ -22,8 +23,8 @@
   --yellow:#ffcc00;
   --blue:#4488ff;
   --text:#e8e8e0;
-  --muted:#555550;
-  --muted2:#333330;
+  --muted:#777770;
+  --muted2:#444440;
 }
 
 html{scroll-behavior:smooth}
@@ -31,7 +32,7 @@ html{scroll-behavior:smooth}
 body{
   background:var(--bg);
   color:var(--text);
-  font-family:'Berkeley Mono', 'Courier New', monospace;
+  font-family:'SF Mono','Fira Code','Cascadia Code','Consolas','Courier New',monospace;
   font-size:13px;
   line-height:1.7;
   min-height:100vh;
@@ -97,7 +98,7 @@ nav{
 
 /* ── Hero ── */
 .hero{
-  padding:80px 40px 60px;
+  padding:40px 40px 36px;
   border-bottom:1px solid var(--border);
   max-width:900px;
 }
@@ -113,8 +114,8 @@ nav{
 .hero-label span{color:var(--green);}
 
 .hero h1{
-  font-family:'Instrument Serif', Georgia, serif;
-  font-size:clamp(42px, 6vw, 72px);
+  font-family:'Instrument Serif', Georgia, 'Times New Roman', serif;
+  font-size:clamp(32px, 4.5vw, 56px);
   font-weight:400;
   line-height:1.1;
   letter-spacing:-1px;
@@ -188,7 +189,7 @@ nav{
   border:none;
   outline:none;
   padding:20px;
-  font-family:'Berkeley Mono','Courier New',monospace;
+  font-family:'SF Mono','Fira Code','Cascadia Code','Consolas','Courier New',monospace;
   font-size:12.5px;
   color:var(--text);
   resize:none;
@@ -202,7 +203,7 @@ nav{
   height:520px;
   overflow-y:auto;
   padding:20px;
-  font-family:'Berkeley Mono','Courier New',monospace;
+  font-family:'SF Mono','Fira Code','Cascadia Code','Consolas','Courier New',monospace;
   font-size:12.5px;
   line-height:1.75;
   white-space:pre-wrap;
