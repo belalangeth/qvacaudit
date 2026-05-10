@@ -1,0 +1,20 @@
+{
+  "name": "solaudit",
+  "version": "1.0.0",
+  "description": "Local Solana Smart Contract Security Auditor powered by QVAC — no cloud, no data leaks",
+  "type": "module",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js"
+  },
+  "engines": {
+    "node": ">=22.17"
+  },
+  "dependencies": {
+    "@qvac/sdk": "latest",
+    "express": "^4.21.2"
+  },
+  "keywords": ["solana", "smart-contract", "security", "audit", "qvac", "local-ai", "web3"],
+  "license": "MIT"
+}

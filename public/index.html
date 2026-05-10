@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SolAudit — Local Solana Smart Contract Auditor</title>
+  <style>
+    /* ── Reset & Base ────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0a0a10;
+      --surface:   #12121c;
+      --surface2:  #1a1a2a;
+      --border:    #2a2a40;
+      --purple:    #9945ff;
+      --green:     #14f195;
+      --red:       #ff4560;
+      --orange:    #ff8c42;
+      --yellow:    #ffd166;
+      --blue:      #4dabf7;
+      --text:      #e8e8f0;
+      --muted:     #666680;
+      --radius:    10px;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    /* ── Layout ──────────────────────────────── */
+    .app {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 24px 20px;
+    }
+
+    /* ── Header ──────────────────────────────── */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 32px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-icon {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, var(--purple), var(--green));
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+
+    .logo-text h1 {
+      font-size: 22px;
+      font-weight: 700;
+      background: linear-gradient(90deg, var(--purple), var(--green));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .logo-text p {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      background: rgba(20, 241, 149, 0.08);
+      border: 1px solid rgba(20, 241, 149, 0.2);
+      border-radius: 20px;
+      font-size: 12px;
+      color: var(--green);
+    }
+
+    .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--green);
+    }
+
+    .dot.loading { background: var(--orange); animation: pulse 1s infinite; }
+    .dot.offline { background: var(--muted); }
+
+    /* ── Model loader ─────────────────────────── */
+    #model-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .model-info h3 { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+    .model-info p  { font-size: 12px; color: var(--muted); }
+
+    #load-progress {
+      flex: 1;
+      max-width: 300px;
+      display: none;
+    }
+
+    .progress-bar-wrap {
+      height: 6px;
+      background: var(--border);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-bottom: 4px;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--purple), var(--green));
+      border-radius: 3px;
+      transition: width 0.3s ease;
+      width: 0%;
+    }
+
+    .progress-label { font-size: 11px; color: var(--muted); }
+
+    /* ── Buttons ─────────────────────────────── */
+    .btn {
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all 0.15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--purple), #7b2fd4);
+      color: #fff;
+    }
+    .btn-primary:hover:not(:disabled) { filter: brightness(1.15); transform: translateY(-1px); }
+
+    .btn-green {
+      background: linear-gradient(135deg, #0d9e5f, var(--green));
+      color: #000;
+    }
+    .btn-green:hover:not(:disabled) { filter: brightness(1.1); transform: translateY(-1px); }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--border);
+    }
+    .btn-ghost:hover:not(:disabled) { color: var(--text); border-color: var(--muted); }
+
+    /* ── Main grid ───────────────────────────── */
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    @media (max-width: 768px) { .grid { grid-template-columns: 1fr; } }
+
+    /* ── Panel ───────────────────────────────── */
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface2);
+    }
+
+    .panel-header h2 { font-size: 14px; font-weight: 600; }
+    .panel-header span { font-size: 12px; color: var(--muted); }
+
+    /* ── Code editor ─────────────────────────── */
+    #code-input {
+      width: 100%;
+      height: 460px;
+      background: transparent;
+      border: none;
+      outline: none;
+      padding: 16px;
+      font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+      font-size: 13px;
+      color: var(--text);
+      resize: none;
+      line-height: 1.7;
+    }
+
+    #code-input::placeholder { color: var(--muted); }
+
+    .panel-footer {
+      padding: 12px 16px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--surface2);
+    }
+
+    .char-count { font-size: 11px; color: var(--muted); }
+
+    /* ── Output panel ────────────────────────── */
+    #output-area {
+      height: 460px;
+      overflow-y: auto;
+      padding: 16px;
+      font-family: 'JetBrains Mono', 'Fira Code', monospace;
+      font-size: 12.5px;
+      line-height: 1.75;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    #output-area::-webkit-scrollbar { width: 6px; }
+    #output-area::-webkit-scrollbar-track { background: transparent; }
+    #output-area::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    .output-placeholder {
+      color: var(--muted);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      gap: 10px;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .output-placeholder .icon { font-size: 36px; opacity: 0.3; }
+
+    /* ── Output token colors ─────────────────── */
+    .token-critical { color: var(--red); }
+    .token-high     { color: var(--orange); }
+    .token-medium   { color: var(--yellow); }
+    .token-low      { color: var(--green); }
+    .token-info     { color: var(--blue); }
+    .token-section  { color: var(--purple); font-weight: bold; }
+
+    /* ── Cursor blink ────────────────────────── */
+    .cursor {
+      display: inline-block;
+      width: 2px;
+      height: 14px;
+      background: var(--green);
+      animation: blink 1s step-end infinite;
+      vertical-align: text-bottom;
+      margin-left: 1px;
+    }
+
+    /* ── Sample buttons ──────────────────────── */
+    .samples {
+      margin-bottom: 24px;
+    }
+
+    .samples h3 { font-size: 13px; color: var(--muted); margin-bottom: 10px; }
+
+    .sample-btns {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .sample-btn {
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      color: var(--text);
+      transition: all 0.15s;
+    }
+
+    .sample-btn:hover { border-color: var(--purple); color: var(--purple); }
+
+    /* ── Animations ──────────────────────────── */
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+    /* ── Footer ──────────────────────────────── */
+    footer {
+      margin-top: 32px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    footer a { color: var(--purple); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Header -->
+  <header>
+    <div class="logo">
+      <div class="logo-icon">🔍</div>
+      <div class="logo-text">
+        <h1>SolAudit</h1>
+        <p>Solana Smart Contract Security Auditor</p>
+      </div>
+    </div>
+    <div class="badge">
+      <div class="dot offline" id="status-dot"></div>
+      <span id="status-text">AI Offline</span>
+    </div>
+  </header>
+
+  <!-- Model loader -->
+  <div id="model-section">
+    <div class="model-info">
+      <h3>🤖 QVAC Local AI Engine</h3>
+      <p>Runs entirely on your device. Your code <strong>never leaves</strong> your machine.</p>
+    </div>
+    <div id="load-progress">
+      <div class="progress-bar-wrap">
+        <div class="progress-bar-fill" id="progress-fill"></div>
+      </div>
+      <div class="progress-label" id="progress-label">Downloading model…</div>
+    </div>
+    <button class="btn btn-primary" id="load-btn" onclick="loadModel()">
+      ⚡ Load AI Model
+    </button>
+  </div>
+
+  <!-- Sample contracts -->
+  <div class="samples">
+    <h3>📋 Load a sample contract to test:</h3>
+    <div class="sample-btns">
+      <button class="sample-btn" onclick="loadSample('overflow')">Integer Overflow</button>
+      <button class="sample-btn" onclick="loadSample('signer')">Missing Signer Check</button>
+      <button class="sample-btn" onclick="loadSample('authority')">Authority Bypass</button>
+      <button class="sample-btn" onclick="loadSample('cpi')">Arbitrary CPI</button>
+      <button class="sample-btn" onclick="clearCode()">✕ Clear</button>
+    </div>
+  </div>
+
+  <!-- Main editor + output -->
+  <div class="grid">
+    <!-- Left: code input -->
+    <div class="panel">
+      <div class="panel-header">
+        <h2>📄 Solana Program Code</h2>
+        <span>Rust / Anchor</span>
+      </div>
+      <textarea id="code-input"
+        placeholder="// Paste your Solana program code here…
+// Example: Anchor program, raw Solana program, or any .rs file
+
+use anchor_lang::prelude::*;
+
+#[program]
+pub mod my_program {
+    use super::*;
+    
+    pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
+        // Your program logic here
+        Ok(())
+    }
+}"
+        oninput="updateCharCount()"
+        spellcheck="false"
+      ></textarea>
+      <div class="panel-footer">
+        <span class="char-count" id="char-count">0 characters</span>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-ghost" onclick="clearCode()" style="padding:7px 14px;font-size:13px">Clear</button>
+          <button class="btn btn-green" id="audit-btn" onclick="runAudit()" disabled>
+            🛡 Run Audit
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: audit output -->
+    <div class="panel">
+      <div class="panel-header">
+        <h2>🛡 Audit Report</h2>
+        <span id="output-status">Waiting for input…</span>
+      </div>
+      <div id="output-area">
+        <div class="output-placeholder">
+          <div class="icon">🔒</div>
+          <div>Audit results will appear here</div>
+          <div style="font-size:11px">Local inference — no internet required</div>
+        </div>
+      </div>
+      <div class="panel-footer">
+        <span class="char-count" id="token-count"></span>
+        <button class="btn btn-ghost" onclick="copyReport()" style="padding:7px 14px;font-size:13px" id="copy-btn" disabled>
+          Copy Report
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <span>SolAudit — powered by <a href="https://qvac.tether.io" target="_blank">QVAC by Tether</a> · Local AI, zero cloud dependency</span>
+    <span>Built for Colosseum Frontier Hackathon 2025</span>
+  </footer>
+
+</div>
+
+<script>
+// ── State ───────────────────────────────────────
+let modelLoaded = false;
+let isAuditing  = false;
+let reportText  = "";
+
+// ── Sample contracts ────────────────────────────
+const SAMPLES = {
+  overflow: `use anchor_lang::prelude::*;
+
+#[program]
+pub mod vault {
+    use super::*;
+
+    pub fn deposit(ctx: Context<Deposit>, amount: u64) -> Result<()> {
+        let vault = &mut ctx.accounts.vault;
+        // BUG: No overflow check
+        vault.total_deposited = vault.total_deposited + amount;
+        vault.user_balance = vault.user_balance + amount;
+        Ok(())
+    }
+
+    pub fn withdraw(ctx: Context<Withdraw>, amount: u64) -> Result<()> {
+        let vault = &mut ctx.accounts.vault;
+        // BUG: No underflow check, no signer validation
+        vault.user_balance = vault.user_balance - amount;
+        **ctx.accounts.user.lamports.borrow_mut() += amount;
+        **ctx.accounts.vault_pda.lamports.borrow_mut() -= amount;
+        Ok(())
+    }
+}
+
+#[derive(Accounts)]
+pub struct Deposit<'info> {
+    #[account(mut)]
+    pub vault: Account<'info, VaultState>,
+    pub user: Signer<'info>,
+}
+
+#[derive(Accounts)]
+pub struct Withdraw<'info> {
+    #[account(mut)]
+    pub vault: Account<'info, VaultState>,
+    // BUG: user is not marked as Signer
+    /// CHECK: user account
+    pub user: AccountInfo<'info>,
+    #[account(mut)]
+    pub vault_pda: AccountInfo<'info>,
+}
+
+#[account]
+pub struct VaultState {
+    pub total_deposited: u64,
+    pub user_balance: u64,
+}`,
+
+  signer: `use solana_program::{
+    account_info::{next_account_info, AccountInfo},
+    entrypoint::ProgramResult,
+    pubkey::Pubkey,
+};
+
+pub fn process_transfer(
+    _program_id: &Pubkey,
+    accounts: &[AccountInfo],
+    amount: u64,
+) -> ProgramResult {
+    let account_iter = &mut accounts.iter();
+    let from = next_account_info(account_iter)?;
+    let to   = next_account_info(account_iter)?;
+
+    // BUG: is_signer never checked — anyone can drain 'from'
+    **from.lamports.borrow_mut() -= amount;
+    **to.lamports.borrow_mut()   += amount;
+
+    Ok(())
+}
+
+pub fn close_account(
+    _program_id: &Pubkey,
+    accounts: &[AccountInfo],
+) -> ProgramResult {
+    let account_iter  = &mut accounts.iter();
+    let target        = next_account_info(account_iter)?;
+    let destination   = next_account_info(account_iter)?;
+    // BUG: no authority check, no signer check
+    // Any caller can close any account
+    let lamports = target.lamports();
+    **destination.lamports.borrow_mut() += lamports;
+    **target.lamports.borrow_mut()       = 0;
+    Ok(())
+}`,
+
+  authority: `use anchor_lang::prelude::*;
+
+#[program]
+pub mod token_mint {
+    use super::*;
+
+    pub fn mint_tokens(ctx: Context<MintTokens>, amount: u64) -> Result<()> {
+        let config = &ctx.accounts.config;
+        // BUG: authority check reads from user-supplied config account,
+        //      not from a PDA owned by this program
+        require!(
+            config.mint_authority == ctx.accounts.caller.key(),
+            ErrorCode::Unauthorized
+        );
+        // mint logic here...
+        Ok(())
+    }
+
+    pub fn update_config(ctx: Context<UpdateConfig>, new_authority: Pubkey) -> Result<()> {
+        let config = &mut ctx.accounts.config;
+        // BUG: no check that caller is the current authority
+        config.mint_authority = new_authority;
+        Ok(())
+    }
+}
+
+#[derive(Accounts)]
+pub struct MintTokens<'info> {
+    // BUG: config account has no owner constraint — attacker can pass their own
+    /// CHECK: config
+    pub config: Account<'info, MintConfig>,
+    pub caller: Signer<'info>,
+}
+
+#[derive(Accounts)]
+pub struct UpdateConfig<'info> {
+    #[account(mut)]
+    pub config: Account<'info, MintConfig>,
+    // BUG: should be the current authority, not any signer
+    pub caller: Signer<'info>,
+}
+
+#[account]
+pub struct MintConfig {
+    pub mint_authority: Pubkey,
+}
+
+#[error_code]
+pub enum ErrorCode {
+    #[msg("Unauthorized")]
+    Unauthorized,
+}`,
+
+  cpi: `use anchor_lang::prelude::*;
+use anchor_lang::solana_program::program::invoke;
+
+#[program]
+pub mod swap {
+    use super::*;
+
+    pub fn execute_swap(
+        ctx: Context<ExecuteSwap>,
+        instruction_data: Vec<u8>,
+    ) -> Result<()> {
+        // BUG: Arbitrary CPI — program_id comes from user-supplied account
+        // Attacker can pass a malicious program that drains accounts
+        let ix = solana_program::instruction::Instruction {
+            program_id: ctx.accounts.swap_program.key(),
+            accounts: vec![
+                AccountMeta::new(ctx.accounts.user_token.key(), false),
+                AccountMeta::new(ctx.accounts.pool.key(), false),
+            ],
+            data: instruction_data,
+        };
+
+        invoke(
+            &ix,
+            &[
+                ctx.accounts.user_token.to_account_info(),
+                ctx.accounts.pool.to_account_info(),
+                ctx.accounts.swap_program.to_account_info(),
+            ],
+        )?;
+
+        Ok(())
+    }
+}
+
+#[derive(Accounts)]
+pub struct ExecuteSwap<'info> {
+    #[account(mut)]
+    pub user_token: AccountInfo<'info>,
+    #[account(mut)]
+    pub pool: AccountInfo<'info>,
+    // BUG: swap_program is not verified against a known program ID
+    /// CHECK: external swap program
+    pub swap_program: AccountInfo<'info>,
+    pub user: Signer<'info>,
+}`,
+};
+
+// ── Load model ──────────────────────────────────
+async function loadModel() {
+  const btn = document.getElementById("load-btn");
+  const progressSection = document.getElementById("load-progress");
+  const dot  = document.getElementById("status-dot");
+  const text = document.getElementById("status-text");
+
+  btn.disabled = true;
+  progressSection.style.display = "block";
+  dot.className  = "dot loading";
+  text.textContent = "Loading model…";
+
+  const evtSource = new EventSource("/api/load-model-sse");
+
+  // We use fetch + ReadableStream instead of EventSource for POST
+  progressSection.style.display = "block";
+
+  try {
+    const res = await fetch("/api/load-model", { method: "POST" });
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+
+      const lines = buffer.split("\n");
+      buffer = lines.pop();
+
+      for (const line of lines) {
+        if (!line.startsWith("data: ")) continue;
+        try {
+          const evt = JSON.parse(line.slice(6));
+          handleLoadEvent(evt);
+        } catch (_) {}
+      }
+    }
+  } catch (err) {
+    setStatus("offline", "Load failed");
+    btn.disabled = false;
+  }
+}
+
+function handleLoadEvent(evt) {
+  const fill  = document.getElementById("progress-fill");
+  const label = document.getElementById("progress-label");
+  const btn   = document.getElementById("load-btn");
+  const auditBtn = document.getElementById("audit-btn");
+  const dot   = document.getElementById("status-dot");
+  const text  = document.getElementById("status-text");
+
+  if (evt.type === "progress") {
+    const pct = evt.percentage ?? 0;
+    fill.style.width = `${pct}%`;
+    label.textContent = `${evt.label ?? "Downloading…"} ${pct.toFixed(1)}%`;
+  } else if (evt.type === "ready") {
+    modelLoaded = true;
+    document.getElementById("load-progress").style.display = "none";
+    btn.textContent = "✅ Model Ready";
+    btn.disabled = true;
+    auditBtn.disabled = false;
+    dot.className = "dot";
+    dot.style.background = "var(--green)";
+    text.textContent = "AI Ready";
+  } else if (evt.type === "error") {
+    label.textContent = "Error: " + evt.message;
+    dot.className = "dot offline";
+    text.textContent = "Load failed";
+    btn.disabled = false;
+  }
+}
+
+// ── Run audit ───────────────────────────────────
+async function runAudit() {
+  const code = document.getElementById("code-input").value.trim();
+  if (!code) return;
+  if (isAuditing) return;
+
+  isAuditing = true;
+  reportText = "";
+
+  const output   = document.getElementById("output-area");
+  const auditBtn = document.getElementById("audit-btn");
+  const copyBtn  = document.getElementById("copy-btn");
+  const statusEl = document.getElementById("output-status");
+
+  auditBtn.disabled = true;
+  copyBtn.disabled  = true;
+  output.innerHTML  = '<span style="color:var(--muted)">⏳ Analysing contract</span><span class="cursor"></span>';
+  statusEl.textContent = "Auditing…";
+
+  let fullText = "";
+
+  try {
+    const res = await fetch("/api/audit", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code }),
+    });
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+    let started = false;
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+
+      const lines = buffer.split("\n");
+      buffer = lines.pop();
+
+      for (const line of lines) {
+        if (!line.startsWith("data: ")) continue;
+        try {
+          const evt = JSON.parse(line.slice(6));
+
+          if (evt.type === "start") {
+            output.innerHTML = "";
+            started = true;
+          } else if (evt.type === "token") {
+            fullText += evt.token;
+            renderOutput(output, fullText, true);
+            output.scrollTop = output.scrollHeight;
+          } else if (evt.type === "done") {
+            renderOutput(output, fullText, false);
+            statusEl.textContent = "Report ready";
+            reportText = fullText;
+            copyBtn.disabled = false;
+            document.getElementById("token-count").textContent =
+              `${fullText.length} chars`;
+          } else if (evt.type === "error") {
+            output.innerHTML = `<span style="color:var(--red)">❌ ${escHtml(evt.message)}</span>`;
+            statusEl.textContent = "Error";
+          }
+        } catch (_) {}
+      }
+    }
+  } catch (err) {
+    output.innerHTML = `<span style="color:var(--red)">❌ Network error: ${escHtml(err.message)}</span>`;
+  }
+
+  isAuditing = false;
+  auditBtn.disabled = false;
+}
+
+// ── Render output with colour coding ────────────
+function renderOutput(el, text, showCursor) {
+  // Basic colour mapping by keyword
+  let html = escHtml(text)
+    .replace(/(🔴 CRITICAL)/g, '<span class="token-critical">$1</span>')
+    .replace(/(🟠 HIGH)/g,     '<span class="token-high">$1</span>')
+    .replace(/(🟡 MEDIUM)/g,   '<span class="token-medium">$1</span>')
+    .replace(/(🟢 LOW)/g,      '<span class="token-low">$1</span>')
+    .replace(/(🔵 INFO)/g,     '<span class="token-info">$1</span>')
+    .replace(/(═+)/g,          '<span class="token-section">$1</span>')
+    .replace(/(RISK SCORE\s*:.*)/g, '<span class="token-section">$1</span>')
+    .replace(/(TOP ACTIONS\s*:)/g,  '<span class="token-section">$1</span>');
+
+  el.innerHTML = html + (showCursor ? '<span class="cursor"></span>' : "");
+}
+
+// ── Helpers ─────────────────────────────────────
+function escHtml(str) {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+function updateCharCount() {
+  const code = document.getElementById("code-input").value;
+  document.getElementById("char-count").textContent = `${code.length.toLocaleString()} characters`;
+}
+
+function loadSample(name) {
+  document.getElementById("code-input").value = SAMPLES[name] ?? "";
+  updateCharCount();
+}
+
+function clearCode() {
+  document.getElementById("code-input").value = "";
+  updateCharCount();
+}
+
+function copyReport() {
+  if (!reportText) return;
+  navigator.clipboard.writeText(reportText).then(() => {
+    const btn = document.getElementById("copy-btn");
+    btn.textContent = "✅ Copied!";
+    setTimeout(() => (btn.textContent = "Copy Report"), 1500);
+  });
+}
+
+// ── On load: check if model already loaded ───────
+window.addEventListener("load", async () => {
+  try {
+    const res  = await fetch("/api/status");
+    const data = await res.json();
+    if (data.loaded) {
+      handleLoadEvent({ type: "ready" });
+    }
+  } catch (_) {}
+});
+</script>
+</body>
+</html>
